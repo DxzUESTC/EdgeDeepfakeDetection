@@ -1,0 +1,14 @@
+Apple Sillicon:
+# 创建新的 conda 环境
+conda create -n EDD python=3.9
+conda activate EDD
+
+# 安装基础依赖
+pip install opencv-python
+pip install numpy
+
+# 安装 PyTorch (MPS 支持)
+pip install torch torchvision
+
+# 安装 RetinaFace
+pip install retinaface-pytorch

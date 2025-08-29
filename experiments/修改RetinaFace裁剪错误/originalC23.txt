@@ -1,0 +1,25 @@
+004_frame_0041_face ok
+014_frame_0048_face ok
+016_frame_0016_face ok
+216_frame_0011_face ok
+217_frame_0025_face ok
+252_frame_0022_face ok
+257_frame_0039_face ok
+258_frame_0018_face ok
+332_frame_0017_face ok
+370_frame_0039_face ok
+420_frame_0020_face ok
+436_frame_0033_face ok
+456_frame_0033_face ok
+474_frame_0031_face ok
+509_frame_0001_face ok
+629_frame_0018_face ok
+738_frame_0039_face ok
+748_frame_0001_face ok
+766_frame_0041_face ok
+823_frame_0044_face ok
+850_frame_0009_face ok
+869_frame_0046_face ok
+
+临时路径：D:/09_Project/BWTAC2025/EdgeDeepfakeDetection/data/preprocessed/dataset_frames/original/c23/004_frame_0041.png
+D:/09_Project/BWTAC2025/EdgeDeepfakeDetection/experiments/temp

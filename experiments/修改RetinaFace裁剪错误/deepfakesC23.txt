@@ -1,0 +1,13 @@
+004 ok
+016 ok
+217 ok
+332 ok
+345 ok
+420 ok
+474 ok
+569 ok
+638 ok
+894 ok
+
+路径示意：D:/09_Project/BWTAC2025/EdgeDeepfakeDetection/data/preprocessed/dataset_frames/deepfakes/c23/000_003_frame_0002.png
+D:/09_Project/BWTAC2025/EdgeDeepfakeDetection/experiments/temp
