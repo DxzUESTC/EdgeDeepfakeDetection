@@ -41,6 +41,9 @@ def worker_init_fn(worker_id):
 
 # 设置详细日志
 def setup_detailed_logging(log_dir=None):
+    """
+    设置日志系统，确保只创建一个日志文件
+    """
     # 如果没有指定日志目录，使用当前脚本目录
     if log_dir is None:
         log_dir = os.path.dirname(os.path.abspath(__file__))
@@ -48,14 +51,22 @@ def setup_detailed_logging(log_dir=None):
     # 确保日志目录存在
     os.makedirs(log_dir, exist_ok=True)
     
-    # 检查是否已经设置过logger，避免重复设置
+    # 获取或创建logger
     logger = logging.getLogger('train_logger')
+    
+    # 如果已经配置过，直接返回现有的logger
     if logger.handlers:
-        return logger, None
-        
+        # 从第一个FileHandler中获取文件名
+        log_filename = None
+        for handler in logger.handlers:
+            if isinstance(handler, logging.FileHandler):
+                log_filename = handler.baseFilename
+                break
+        return logger, log_filename
+    
     logger.setLevel(logging.INFO)
     
-    # 创建文件handler
+    # 创建唯一的日志文件名
     log_filename = os.path.join(log_dir, f'train_log_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
     file_handler = logging.FileHandler(log_filename, encoding='utf-8')
     file_handler.setLevel(logging.INFO)
@@ -81,8 +92,9 @@ def setup_detailed_logging(log_dir=None):
     
     return logger, log_filename
 
-# 设置日志
-logger, log_file_path = setup_detailed_logging()
+# 全局logger变量，将在main函数中初始化
+logger = None
+log_file_path = None
 
 # 配置函数
 def get_config():
@@ -92,9 +104,9 @@ def get_config():
     """
     config = {
         # 路径配置
-        'base_dir': r'D:\09_ Project\EdgeDeepfakeDetection',
-        'log_dir': r'D:\09_ Project\EdgeDeepfakeDetection\logs',
-        'model_save_dir': r'D:\09_ Project\EdgeDeepfakeDetection\models',
+        'base_dir': r'D:\09_Project\BWTAC2025\EdgeDeepfakeDetection',
+        'log_dir': r'D:\09_Project\BWTAC2025\EdgeDeepfakeDetection\logs',
+        'model_save_dir': r'D:\09_Project\BWTAC2025\EdgeDeepfakeDetection\models\baseline\mobilenetv3',
         
         # 随机种子配置
         'random_seed': 42,  # 设为None则不固定种子，使用随机结果；设为整数则确保结果可重现
@@ -348,7 +360,7 @@ if __name__ == '__main__':
         set_random_seed(config['random_seed'])
         print(f"已设置随机种子: {config['random_seed']}")
     
-    # 重新设置日志到指定目录
+    # 初始化日志到指定目录（确保只设置一次）
     logger, log_file_path = setup_detailed_logging(config['log_dir'])
     
     # 程序开始记录
