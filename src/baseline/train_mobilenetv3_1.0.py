@@ -104,9 +104,9 @@ def get_config():
     """
     config = {
         # 路径配置
-        'base_dir': r'D:\09_Project\BWTAC2025\EdgeDeepfakeDetection',
-        'log_dir': r'D:\09_Project\BWTAC2025\EdgeDeepfakeDetection\logs',
-        'model_save_dir': r'D:\09_Project\BWTAC2025\EdgeDeepfakeDetection\models\baseline\mobilenetv3',
+        'base_dir': r'D:\09_Project\EdgeDeepfakeDetection',
+        'log_dir': r'D:\09_Project\EdgeDeepfakeDetection\experiments\baseline\mobilenetv3',
+        'model_save_dir': r'D:\09_Project\EdgeDeepfakeDetection\models\baseline\mobilenetv3\seed42_vali',
         
         # 随机种子配置
         'random_seed': 42,  # 设为None则不固定种子，使用随机结果；设为整数则确保结果可重现
