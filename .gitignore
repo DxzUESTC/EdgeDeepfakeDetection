@@ -52,6 +52,7 @@ venv.bak/
 
 # 日志文件
 *.log
+*.md
 
 # 临时文件
 temp/
