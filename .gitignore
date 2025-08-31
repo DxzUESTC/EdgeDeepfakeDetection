@@ -1,5 +1,6 @@
 # 忽略数据文件夹
 data/
+experiments/grok
 
 # Python相关文件
 __pycache__/
