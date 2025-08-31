@@ -46,8 +46,8 @@ venv.bak/
 .ipynb_checkpoints
 
 # 模型文件 (如果不想提交大型模型文件)
-# *.pth
-# *.pt
+*.pth
+*.pt
 # *.h5
 
 # 日志文件
