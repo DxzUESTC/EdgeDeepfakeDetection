@@ -1,0 +1,25 @@
+2025-08-31 12:12:29 - [INFO] - 日志文件保存位置: D:\09_Project\EdgeDeepfakeDetection\experiments\server\kd_train_log_20250831_121229.txt
+2025-08-31 12:12:29 - [INFO] - ============================================================
+2025-08-31 12:12:29 - [INFO] - 知识蒸馏训练 - SwinT -> MobileNetV3
+2025-08-31 12:12:29 - [INFO] - ============================================================
+2025-08-31 12:12:29 - [INFO] - 训练配置:
+2025-08-31 12:12:29 - [INFO] -   base_dir: D:\09_Project\EdgeDeepfakeDetection
+2025-08-31 12:12:29 - [INFO] -   log_dir: D:\09_Project\EdgeDeepfakeDetection\experiments\server
+2025-08-31 12:12:29 - [INFO] -   model_save_dir: D:\09_Project\EdgeDeepfakeDetection\models\server\kd_mobilenetv3
+2025-08-31 12:12:29 - [INFO] -   teacher_model_path: D:\09_Project\EdgeDeepfakeDetection\models\baseline\swin_transformer\seed42\swin_tiny_best.pth
+2025-08-31 12:12:29 - [INFO] -   random_seed: 42
+2025-08-31 12:12:29 - [INFO] -   batch_size: 64
+2025-08-31 12:12:29 - [INFO] -   num_workers: 4
+2025-08-31 12:12:29 - [INFO] -   num_epochs: 40
+2025-08-31 12:12:29 - [INFO] -   patience: 8
+2025-08-31 12:12:29 - [INFO] -   learning_rate: 0.0005
+2025-08-31 12:12:29 - [INFO] -   weight_decay: 0.0001
+2025-08-31 12:12:29 - [INFO] -   temperature: 4.0
+2025-08-31 12:12:29 - [INFO] -   alpha: 0.7
+2025-08-31 12:12:29 - [INFO] -   beta: 0.3
+2025-08-31 12:12:29 - [INFO] -   add_train_noise: False
+2025-08-31 12:12:29 - [INFO] -   add_test_noise: True
+2025-08-31 12:12:29 - [INFO] - 正在加载数据集...
+2025-08-31 12:12:29 - [INFO] - train 数据集: 0 张图片
+2025-08-31 12:12:30 - [INFO] - val 数据集: 0 张图片
+2025-08-31 12:12:30 - [INFO] - 设置num_workers为: 0 (避免多进程问题)
