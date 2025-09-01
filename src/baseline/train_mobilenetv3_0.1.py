@@ -134,16 +134,22 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
 
         model.eval()
         val_preds, val_labels = [], []
+        val_running_loss = 0.0
         with torch.no_grad():
             for inputs, labels in val_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
+                # 计算验证损失
+                val_loss = criterion(outputs, labels)
+                val_running_loss += val_loss.item() * inputs.size(0)
+                
                 probs = torch.softmax(outputs, dim=1)[:, 1].cpu().numpy()
                 val_preds.extend(probs)
                 val_labels.extend(labels.cpu().numpy())
+        val_epoch_loss = val_running_loss / len(val_loader.dataset)
         val_auc = roc_auc_score(val_labels, val_preds)
-        logging.info(f"Epoch {epoch+1}, Val AUC: {val_auc:.4f}")
-        print(f"Epoch {epoch+1}, Train Loss: {epoch_loss:.4f}, Val AUC: {val_auc:.4f}")
+        logging.info(f"Epoch {epoch+1}, Val Loss: {val_epoch_loss:.4f}, Val AUC: {val_auc:.4f}")
+        print(f"Epoch {epoch+1}, Train Loss: {epoch_loss:.4f}, Val Loss: {val_epoch_loss:.4f}, Val AUC: {val_auc:.4f}")
 
         if val_auc > best_auc:
             best_auc = val_auc

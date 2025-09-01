@@ -107,7 +107,7 @@ def get_config():
         # 路径配置
         'base_dir': r'D:\09_Project\EdgeDeepfakeDetection',
         'log_dir': r'D:\09_Project\EdgeDeepfakeDetection\experiments\baseline\swin_transformer',
-        'model_save_dir': r'D:\09_Project\EdgeDeepfakeDetection\models\baseline\swin_transformer\seed42',
+        'model_save_dir': r'D:\09_Project\EdgeDeepfakeDetection\models\baseline\swin_transformer\seed42_finetune',
         
         # 随机种子配置
         'random_seed': 42,  # 设为None则不固定种子，使用随机结果；设为整数则确保结果可重现
@@ -115,10 +115,10 @@ def get_config():
         # 训练参数
         'batch_size': 32,  # Swin-T 相对于 MobileNet 更大，需要减小批次大小
         'num_workers': 4,
-        'num_epochs': 50,
-        'patience': 8,  # 增加patience，给模型更多时间收敛
-        'learning_rate': 1e-4,  # 调整学习率，从5e-4改为1e-4
-        'weight_decay': 0.05,  # 增加权重衰减，typical for ViT/Swin
+        'num_epochs': 60,  # 增至60，确保充分收敛
+        'patience': 10,  # 设为10，平衡过拟合与收敛
+        'learning_rate': 2e-4,  # 略高，加速早期收敛
+        'weight_decay': 0.01,  # 折中值，减轻正则化强度
         
         # 数据参数
         'add_train_noise': False,  # 训练时是否添加H.264噪声
@@ -288,15 +288,21 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
         val_start_time = time.time()
         model.eval()
         val_preds, val_labels = [], []
+        val_running_loss = 0.0
         with torch.no_grad():
             for inputs, labels in val_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
+                # 计算验证损失
+                val_loss = criterion(outputs, labels)
+                val_running_loss += val_loss.item() * inputs.size(0)
+                
                 probs = torch.softmax(outputs, dim=1)[:, 1].cpu().numpy()
                 val_preds.extend(probs)
                 val_labels.extend(labels.cpu().numpy())
         
         val_time = time.time() - val_start_time
+        val_epoch_loss = val_running_loss / len(val_loader.dataset)
         val_auc = roc_auc_score(val_labels, val_preds)
         val_acc = accuracy_score(val_labels, (np.array(val_preds) > 0.5).astype(int))
         
@@ -305,12 +311,12 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
         # 详细日志记录
         logger.info(f"Epoch {epoch+1} 结果:")
         logger.info(f"  训练 - Loss: {epoch_loss:.6f}, AUC: {train_auc:.4f}, Acc: {train_acc:.4f}")
-        logger.info(f"  验证 - AUC: {val_auc:.4f}, Acc: {val_acc:.4f}")
+        logger.info(f"  验证 - Loss: {val_epoch_loss:.6f}, AUC: {val_auc:.4f}, Acc: {val_acc:.4f}")
         logger.info(f"  时间 - 训练: {train_time:.1f}s, 验证: {val_time:.1f}s, 总计: {epoch_time:.1f}s")
         logger.info(f"  学习率: {current_lr:.6f}")
 
         print(f"Epoch {epoch+1}, Train Loss: {epoch_loss:.4f}, Train AUC: {train_auc:.4f}, Train Acc: {train_acc:.4f}")
-        print(f"           Val AUC: {val_auc:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.1f}s")
+        print(f"           Val Loss: {val_epoch_loss:.4f}, Val AUC: {val_auc:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.1f}s")
 
         # 检查是否为最佳模型
         if val_auc > best_auc:
@@ -472,8 +478,16 @@ if __name__ == '__main__':
     logger.info("正在初始化Swin Transformer Tiny模型...")
     try:
         model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=True, num_classes=2)
+        
+        # 在分类头添加 Dropout (0.3)
+        original_head = model.head
+        model.head = nn.Sequential(
+            nn.Dropout(0.3),
+            original_head
+        )
+        
         logger.info("已加载预训练的Swin Transformer Tiny模型")
-        logger.info("模型结构: swin_tiny_patch4_window7_224")
+        logger.info("模型结构: swin_tiny_patch4_window7_224 + Dropout(0.3)")
         
         # 验证预训练权重是否正确加载
         logger.info("验证预训练权重加载状态...")
@@ -497,7 +511,15 @@ if __name__ == '__main__':
         import subprocess
         subprocess.check_call(['pip', 'install', 'timm'])
         model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=True, num_classes=2)
-        logger.info("已成功加载Swin Transformer Tiny模型")
+        
+        # 在分类头添加 Dropout (0.3)
+        original_head = model.head
+        model.head = nn.Sequential(
+            nn.Dropout(0.3),
+            original_head
+        )
+        
+        logger.info("已成功加载Swin Transformer Tiny模型 + Dropout(0.3)")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"使用设备: {device}")
@@ -516,18 +538,20 @@ if __name__ == '__main__':
     # 使用warmup + cosine annealing scheduler
     from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
     
-    # warmup scheduler
-    warmup_epochs = 5
+    # warmup scheduler - 延长至10 epochs
+    warmup_epochs = 10
     warmup_scheduler = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
-    main_scheduler = CosineAnnealingLR(optimizer, T_max=config['num_epochs'] - warmup_epochs)
+    main_scheduler = CosineAnnealingLR(optimizer, T_max=config['num_epochs'], eta_min=1e-6)  # 设置最小学习率为1e-6
     scheduler = SequentialLR(optimizer, [warmup_scheduler, main_scheduler], milestones=[warmup_epochs])
     
     logger.info("优化器配置:")
     logger.info(f"  - 优化器: AdamW")
     logger.info(f"  - 初始学习率: {config['learning_rate']}")
+    logger.info(f"  - 最小学习率: 1e-6")
     logger.info(f"  - 权重衰减: {config['weight_decay']}")
-    logger.info(f"  - 调度器: Warmup({warmup_epochs}) + CosineAnnealingLR")
+    logger.info(f"  - 调度器: Warmup({warmup_epochs}) + CosineAnnealingLR(T_max={config['num_epochs']})")
     logger.info(f"  - 损失函数: CrossEntropyLoss (label_smoothing=0.1)")
+    logger.info(f"  - 分类头Dropout: 0.3")
 
     # 训练
     best_auc, best_model_path = train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, 

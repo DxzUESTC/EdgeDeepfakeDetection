@@ -295,15 +295,21 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
         val_start_time = time.time()
         model.eval()
         val_preds, val_labels = [], []
+        val_running_loss = 0.0
         with torch.no_grad():
             for inputs, labels in val_loader:
                 inputs, labels = inputs.to(device), labels.to(device)
                 outputs = model(inputs)
+                # 计算验证损失
+                val_loss = criterion(outputs, labels)
+                val_running_loss += val_loss.item() * inputs.size(0)
+                
                 probs = torch.softmax(outputs, dim=1)[:, 1].cpu().numpy()
                 val_preds.extend(probs)
                 val_labels.extend(labels.cpu().numpy())
         
         val_time = time.time() - val_start_time
+        val_epoch_loss = val_running_loss / len(val_loader.dataset)
         val_auc = roc_auc_score(val_labels, val_preds)
         val_acc = accuracy_score(val_labels, (np.array(val_preds) > 0.5).astype(int))
         
@@ -312,12 +318,12 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
         # 详细日志记录
         logger.info(f"Epoch {epoch+1} 结果:")
         logger.info(f"  训练 - Loss: {epoch_loss:.6f}, AUC: {train_auc:.4f}, Acc: {train_acc:.4f}")
-        logger.info(f"  验证 - AUC: {val_auc:.4f}, Acc: {val_acc:.4f}")
+        logger.info(f"  验证 - Loss: {val_epoch_loss:.6f}, AUC: {val_auc:.4f}, Acc: {val_acc:.4f}")
         logger.info(f"  时间 - 训练: {train_time:.1f}s, 验证: {val_time:.1f}s, 总计: {epoch_time:.1f}s")
         logger.info(f"  学习率: {current_lr:.6f}")
 
         print(f"Epoch {epoch+1}, Train Loss: {epoch_loss:.4f}, Train AUC: {train_auc:.4f}, Train Acc: {train_acc:.4f}")
-        print(f"           Val AUC: {val_auc:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.1f}s")
+        print(f"           Val Loss: {val_epoch_loss:.4f}, Val AUC: {val_auc:.4f}, Val Acc: {val_acc:.4f}, Time: {epoch_time:.1f}s")
 
         # 检查是否为最佳模型
         if val_auc > best_auc:
