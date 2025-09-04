@@ -7,13 +7,40 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from tqdm import tqdm
 
 # 输入和输出路径（保持目录结构）
-input_dir = "D:\\09_Project\\BWTAC2025\\EdgeDeepfakeDetection\\data\\preprocessed\\faces"
-output_dir = "D:\\09_Project\\BWTAC2025\\EdgeDeepfakeDetection\\data\\preprocessed\\faces_224"
-target_size = (224, 224)
+input_dir = "D:\\09_Project\\EdgeDeepfakeDetection\\data\\preprocessed\\faces"
+output_dir = "D:\\09_Project\\EdgeDeepfakeDetection\\data\\preprocessed\\faces_256"
+target_size = (256, 256)
+
+def get_folder_prefix(path):
+    """根据文件夹路径返回对应的前缀"""
+    path_lower = path.lower()
+    if 'original' in path_lower:
+        return '0'
+    elif 'deepfakes' in path_lower:
+        return '1'
+    elif 'face2face' in path_lower:
+        return '2'
+    elif 'faceshifter' in path_lower:
+        return '3'
+    elif 'faceswap' in path_lower:
+        return '4'
+    elif 'neuraltexture' in path_lower:
+        return '5'
+    else:
+        return ''  # 如果没有匹配的文件夹，不添加前缀
 
 def process_image(in_path, out_path):
     try:
         os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        
+        # 获取前缀并修改输出文件名
+        prefix = get_folder_prefix(in_path)
+        if prefix:
+            out_dir = os.path.dirname(out_path)
+            filename = os.path.basename(out_path)
+            new_filename = f"{prefix}{filename}"
+            out_path = os.path.join(out_dir, new_filename)
+        
         img = Image.open(in_path).convert("RGB")
         img = img.resize(target_size, Image.LANCZOS)
         img.save(out_path, "JPEG")

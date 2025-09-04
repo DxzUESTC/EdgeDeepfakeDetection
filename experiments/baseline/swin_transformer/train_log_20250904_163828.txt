@@ -1,0 +1,29 @@
+2025-09-04 16:38:28 - [INFO] - 日志文件保存位置: D:\09_Project\EdgeDeepfakeDetection\experiments\baseline\swin_transformer\train_log_20250904_163828.txt
+2025-09-04 16:38:28 - [INFO] - ================================================================================
+2025-09-04 16:38:28 - [INFO] - Swin Transformer V2 Base Deepfake Detection Training
+2025-09-04 16:38:28 - [INFO] - 开始时间: 2025-09-04 16:38:28
+2025-09-04 16:38:28 - [INFO] - ================================================================================
+2025-09-04 16:38:28 - [INFO] - 路径配置:
+2025-09-04 16:38:28 - [INFO] -   - 基础目录: D:\09_Project\EdgeDeepfakeDetection
+2025-09-04 16:38:28 - [INFO] -   - 元数据文件: D:\09_Project\EdgeDeepfakeDetection\data\datasets\metadata\video_metadata_c23.csv
+2025-09-04 16:38:28 - [INFO] -   - 人脸数据目录: D:\09_Project\EdgeDeepfakeDetection\data\preprocessed\faces_256
+2025-09-04 16:38:28 - [INFO] -   - 日志保存目录: D:\09_Project\EdgeDeepfakeDetection\experiments\baseline\swin_transformer
+2025-09-04 16:38:28 - [INFO] -   - 模型保存目录: D:\09_Project\EdgeDeepfakeDetection\models\baseline\swin_transformer\seed42_swinv2_base
+2025-09-04 16:38:28 - [INFO] - 训练参数配置:
+2025-09-04 16:38:28 - [INFO] -   - 随机种子: 42
+2025-09-04 16:38:28 - [INFO] -   - 批次大小: 16
+2025-09-04 16:38:28 - [INFO] -   - 工作进程数: 4
+2025-09-04 16:38:28 - [INFO] -   - 训练轮数: 75
+2025-09-04 16:38:28 - [INFO] -   - 早停patience: 12
+2025-09-04 16:38:28 - [INFO] -   - 学习率: 5e-05
+2025-09-04 16:38:28 - [INFO] -   - 权重衰减: 0.05
+2025-09-04 16:38:28 - [INFO] - 所有路径检查通过 ✓
+2025-09-04 16:38:28 - [INFO] - 正在加载数据集...
+2025-09-04 16:38:29 - [INFO] - 数据集加载成功:
+2025-09-04 16:38:29 - [INFO] -   - 训练集样本数: 0
+2025-09-04 16:38:29 - [INFO] -   - 验证集样本数: 0
+2025-09-04 16:38:29 - [INFO] -   - 测试集样本数: 0
+2025-09-04 16:38:29 - [INFO] - 标签分布统计:
+2025-09-04 16:38:29 - [INFO] -   - 训练集 Real: 0, Fake: 0
+2025-09-04 16:38:29 - [INFO] -   - 验证集 Real: 0, Fake: 0
+2025-09-04 16:38:29 - [INFO] -   - 测试集 Real: 0, Fake: 0
