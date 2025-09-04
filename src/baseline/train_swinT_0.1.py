@@ -107,7 +107,7 @@ def get_config():
         # 路径配置
         'base_dir': r'D:\09_Project\EdgeDeepfakeDetection',
         'log_dir': r'D:\09_Project\EdgeDeepfakeDetection\experiments\baseline\swin_transformer',
-        'model_save_dir': r'D:\09_Project\EdgeDeepfakeDetection\models\baseline\swin_transformer\seed42_finetune',
+        'model_save_dir': r'D:\09_Project\EdgeDeepfakeDetection\models\baseline\swin_transformer\seed42_finetune_93',
         
         # 随机种子配置
         'random_seed': 42,  # 设为None则不固定种子，使用随机结果；设为整数则确保结果可重现
@@ -115,13 +115,13 @@ def get_config():
         # 训练参数
         'batch_size': 32,  # Swin-T 相对于 MobileNet 更大，需要减小批次大小
         'num_workers': 4,
-        'num_epochs': 60,  # 增至60，确保充分收敛
-        'patience': 10,  # 设为10，平衡过拟合与收敛
-        'learning_rate': 2e-4,  # 略高，加速早期收敛
-        'weight_decay': 0.01,  # 折中值，减轻正则化强度
+        'num_epochs': 75,  # 增加到75轮，给模型更多时间优化
+        'patience': 12,  # 相应增加patience，平衡过拟合与收敛
+        'learning_rate': 1e-4,  # 稳定学习率，避免优化不稳定和损失波动
+        'weight_decay': 0.05,  # 强正则化，防止过拟合
         
         # 数据参数
-        'add_train_noise': False,  # 训练时是否添加H.264噪声
+        'add_train_noise': True,  # 训练时添加H.264噪声增强鲁棒性
         'add_test_noise': True,    # 测试时是否测试噪声鲁棒性
     }
     return config
@@ -174,7 +174,7 @@ class FFDataset(Dataset):
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # 只在训练时添加噪声，测试时保持原始图像
         if hasattr(self, 'add_noise') and self.add_noise:
-            image = add_h264_noise(image, quality=np.random.randint(20, 50))
+            image = add_h264_noise(image, quality=np.random.randint(30, 50))
         if self.transform:
             image = self.transform(image)
         return image, label
@@ -479,15 +479,15 @@ if __name__ == '__main__':
     try:
         model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=True, num_classes=2)
         
-        # 在分类头添加 Dropout (0.3)
+        # 在分类头添加 Dropout (0.1) - 降低dropout以增强拟合能力
         original_head = model.head
         model.head = nn.Sequential(
-            nn.Dropout(0.3),
+            nn.Dropout(0.1),
             original_head
         )
         
         logger.info("已加载预训练的Swin Transformer Tiny模型")
-        logger.info("模型结构: swin_tiny_patch4_window7_224 + Dropout(0.3)")
+        logger.info("模型结构: swin_tiny_patch4_window7_224 + Dropout(0.1)")
         
         # 验证预训练权重是否正确加载
         logger.info("验证预训练权重加载状态...")
@@ -512,14 +512,14 @@ if __name__ == '__main__':
         subprocess.check_call(['pip', 'install', 'timm'])
         model = timm.create_model('swin_tiny_patch4_window7_224', pretrained=True, num_classes=2)
         
-        # 在分类头添加 Dropout (0.3)
+        # 在分类头添加 Dropout (0.1) - 降低dropout以增强拟合能力
         original_head = model.head
         model.head = nn.Sequential(
-            nn.Dropout(0.3),
+            nn.Dropout(0.1),
             original_head
         )
         
-        logger.info("已成功加载Swin Transformer Tiny模型 + Dropout(0.3)")
+        logger.info("已成功加载Swin Transformer Tiny模型 + Dropout(0.1)")
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.info(f"使用设备: {device}")
@@ -531,27 +531,28 @@ if __name__ == '__main__':
     model = model.to(device)
 
     # 损失和优化器（AdamW 对 Transformer 更友好）
-    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # 添加标签平滑
+    criterion = nn.CrossEntropyLoss()  # 移除标签平滑以追求更低Loss
+    # criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # 标签平滑已注释，追求更好拟合
     # 使用warmup scheduler
     optimizer = optim.AdamW(model.parameters(), lr=config['learning_rate'], weight_decay=config['weight_decay'])
     
     # 使用warmup + cosine annealing scheduler
     from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
     
-    # warmup scheduler - 延长至10 epochs
-    warmup_epochs = 10
+    # warmup scheduler - 缩短至2 epochs，更快进入主要学习阶段
+    warmup_epochs = 2
     warmup_scheduler = LinearLR(optimizer, start_factor=0.1, total_iters=warmup_epochs)
-    main_scheduler = CosineAnnealingLR(optimizer, T_max=config['num_epochs'], eta_min=1e-6)  # 设置最小学习率为1e-6
+    main_scheduler = CosineAnnealingLR(optimizer, T_max=config['num_epochs'], eta_min=1e-5)  # 提高最小学习率至1e-5
     scheduler = SequentialLR(optimizer, [warmup_scheduler, main_scheduler], milestones=[warmup_epochs])
     
     logger.info("优化器配置:")
     logger.info(f"  - 优化器: AdamW")
     logger.info(f"  - 初始学习率: {config['learning_rate']}")
-    logger.info(f"  - 最小学习率: 1e-6")
+    logger.info(f"  - 最小学习率: 1e-5 (提高以保持后期优化能力)")
     logger.info(f"  - 权重衰减: {config['weight_decay']}")
     logger.info(f"  - 调度器: Warmup({warmup_epochs}) + CosineAnnealingLR(T_max={config['num_epochs']})")
-    logger.info(f"  - 损失函数: CrossEntropyLoss (label_smoothing=0.1)")
-    logger.info(f"  - 分类头Dropout: 0.3")
+    logger.info(f"  - 损失函数: CrossEntropyLoss (移除label_smoothing追求更低Loss)")
+    logger.info(f"  - 分类头Dropout: 0.1 (降低以增强拟合能力)")
 
     # 训练
     best_auc, best_model_path = train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, 
