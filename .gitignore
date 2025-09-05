@@ -63,3 +63,7 @@ tmp/
 # OS相关文件
 .DS_Store
 Thumbs.db
+
+# 模型文件夹（本地下载或训练输出）
+models/
+pretrained_models/
